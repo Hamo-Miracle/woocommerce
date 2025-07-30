@@ -1,0 +1,320 @@
+/*
+Theme Name: Blogfull
+Theme URI: https://themeansar.com/free-themes/blogfull-wordpress-theme
+Author: Themeansar
+Author URI: https://themeansar.com
+Description: Blogfull is a fast, clean, modern-looking Best Responsive News Magazine WordPress theme. The theme is fully widgetized, so users can manage the content by using easy to use widgets. Blogfull is suitable for dynamic news, newspapers, magazine, publishers, blogs, editors, online and gaming magazines, newsportals,personal blogs, newspaper, publishing or review siteand any creative website. Blogfull is SEO friendly, WPML,Gutenberg, translation and RTL ready. Live preview : https://demos.themeansar.com/blogus/blogfull/ and documentation at https://docs.themeansar.com/docs/blogus/
+Version: 0.5
+Requires PHP: 7.4
+Requires at least: 6.7
+Tested up to: 6.8
+License: GNU General Public License v3 or later
+License URI: http://www.gnu.org/licenses/gpl-3.0.html
+Template: blogus
+Text Domain: blogfull
+Tags: blog, portfolio, news, grid-Layout, one-column, two-columns, three-columns, flexible-header, left-sidebar, right-sidebar, custom-background, custom-colors, custom-logo, custom-menu, featured-images, footer-widgets, full-width-template, post-formats, rtl-language-support, theme-options, sticky-post, threaded-comments, translation-ready, block-styles, wide-blocks
+
+Blogfull WordPress Theme is child theme of Blogus, Copyright 2023 Themeansar
+Blogfull is distributed under the terms of the GNU General Public License v3
+
+Blogfull is based on Underscores https://underscores.me/, (C) 2012-2017 Automattic, Inc.
+Underscores is distributed under the terms of the GNU GPL v2 or later.
+*/
+:root {
+    --raduis: 6px;
+    --headFont: 'Jost', sans-serif;
+}
+body{
+    font-family: "Onest", sans-serif;
+}
+h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6 {
+    font-weight: 700;
+}
+.inner .title, .bs-blog-post .title {
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.bs-headtwo {
+    border-radius: var(--raduis);
+    background: rgba(255 255 255 / 40%);
+    box-shadow: none;
+    backdrop-filter: blur(15px) saturate(1);
+    -webkit-backdrop-filter: blur(25px) saturate(1);
+    border-bottom: 1px solid rgba(255 255 255 / 40%);
+    z-index: 1;
+    position: relative;
+}
+.bs-blog-post.single .bs-header .bs-info-author-block, .page-entry-title .bs-breadcrumb-section .overlay{
+    backdrop-filter: none;
+    border: none;
+}
+.single-class .featured-widget-content .bs-blog-thumb.lg {
+    height: 300px;
+}
+input[type="text"], input[type="email"], input[type="url"], input[type="password"], input[type="search"], input[type="number"], input[type="tel"], input[type="range"], input[type="date"], input[type="month"], input[type="week"], input[type="time"], input[type="datetime"], input[type="datetime-local"], input[type="color"], textarea, select {
+    border-radius: var(--raduis);
+    background: rgba(255 255 255 / 40%);
+    box-shadow: none;
+    backdrop-filter: blur(15px) saturate(1);
+    -webkit-backdrop-filter: blur(25px) saturate(1);
+    border: 1px solid rgba(255 255 255 / 40%);
+}
+.widget_block .wp-block-search__button, .navigation.pagination .nav-links .page-numbers, .navigation.pagination .nav-links a, .wp-block-tag-cloud a, .tagcloud a{
+    border-radius: var(--raduis);
+}
+.bs-blog-post.single .bs-header .title{
+    display: block;
+}
+.navbar-brand {
+    margin-right: 0;
+}
+.bs-blog-post .title{
+    font-size: 28px;
+}
+.list-blog.bs-blog-post{
+    padding: 20px;
+    border-radius: var(--raduis);
+    background: rgba(255 255 255 / 40%);
+    box-shadow: none;
+    backdrop-filter: blur(15px) saturate(1);
+    -webkit-backdrop-filter: blur(25px) saturate(1);
+    border: 1px solid rgba(255 255 255 / 40%);
+}
+.bs-sidebar .bs-widget{
+    border-radius: var(--raduis);
+    background: rgba(255 255 255 / 40%);
+    box-shadow: none;
+    backdrop-filter: blur(15px) saturate(1);
+    -webkit-backdrop-filter: blur(25px) saturate(1);
+    border: 1px solid rgba(255 255 255 / 40%);
+}
+.wd-back {
+    margin-bottom: 50px;
+    padding: 20px;
+    border-radius: var(--raduis);
+    box-shadow: none;
+    backdrop-filter: blur(15px) saturate(1);
+    -webkit-backdrop-filter: blur(25px) saturate(1);
+    border: 1px solid rgba(255 255 255 / 40%);
+}
+.bs-breadcrumb-section .overlay, .bs_model .modal-content{
+    box-shadow: none;
+    backdrop-filter: blur(15px) saturate(1);
+    -webkit-backdrop-filter: blur(25px) saturate(1);
+    border: 1px solid rgba(255 255 255 / 40%);
+}
+.bs-blog-post.single, .bs-info-author-block, .py-4.px-3.mb-4.bs-card-box, .comments-area.bs-card-box.p-4, .bs-card-box.page-entry-title, .bs-card-box, .navbar-wp .dropdown-menu > li > a{
+    box-shadow: none;
+    backdrop-filter: blur(15px) saturate(1);
+    -webkit-backdrop-filter: blur(25px) saturate(1);
+    border: 1px solid rgba(255 255 255 / 40%);
+}
+.bs-blog-category a { 
+    padding: 5px 10px;
+    border-radius: 14px;
+}
+.list-blog .bs-blog-thumb {
+    width: 35.333333%;
+    max-width: 35.333333%;
+    min-width: 35.333333%;
+    height: 250px;
+    min-height: 250px;
+}
+.bs-blog-thumb, .bs-sidebar .bs-widget, .wd-back, .bs-blog-post.three, .bs-slide, .page-entry-title, .bs-breadcrumb-section .overlay, .bs-blog-post.single, .bs-info-author-block, .py-4.px-3.mb-4.bs-card-box, .comments-area.bs-card-box.p-4, .bs-card-box.padding-20{
+    border-radius: var(--raduis);
+}
+.bs .swiper-button-prev, .bs .swiper-button-next{
+    opacity: 0;
+}
+/* ------------------
+-----------new-tickers-------
+---------------- */
+.bs-latest-news {
+    overflow: hidden;
+    min-height: 50px;
+    position: relative;
+    border: 2px solid;
+    margin-top: 30px;
+    border-radius: var(--raduis);
+}
+.bs-latest-news .acmeticker-wrap{
+    height: 100%;
+}
+.bs-latest-title {
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    transform: translateY(-50%);
+    height: 100%; 
+    padding-right: 15px;
+    z-index: 9;
+    display: flex;
+    align-items: center;
+}
+.bs-latest-news-slider {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100vw;
+    height: auto;
+}
+.bs-latest-news-slider.stop-ticker{
+    right: 0;
+    left: 0;
+}
+.bs-latest-heading {
+    font-size: 18px;
+    margin-bottom: 0; 
+    height: 100%; 
+    padding: 10px 15px;
+    z-index: 9;
+    display: flex;
+    align-items: center;
+}
+.bs-latest-heading i{
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid;
+    font-size: 15px;
+    line-height: 28px;
+    text-align: center;
+    position: relative;
+}
+.bs-latest-heading span{
+    margin-left: 8px;
+}
+.bs-latest-heading i:after {
+    content: '';
+    display: block;
+    width: 28px;
+    height: 28px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid;
+    border-radius: 50%;
+    animation-name: rippal;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+}
+@keyframes rippal {
+	0%{
+		width: 0;
+		height: 0;
+		opacity: 1;
+	}
+	100%{
+		width: 28px;
+		height: 28px;
+		opacity: 1;
+	}
+}
+.featured-widget-content .small-post .img-small-post {
+  border-radius: 50%;
+}
+.bs-latest-list {
+    margin: 0 10px; 
+}
+.bs-latest-news-inner {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+.bs-latest-play {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.bs-latest-play span{
+    font-size: 16px; 
+    line-height: 23px;
+    padding: 10px 15px; 
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.bs-latest-news .bs-latest-img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+    border-radius:4px;
+    object-fit: cover;
+    border: 1px solid ;
+}
+/* Sidebar Title */
+.bs-widget-title .title, .widget_block h2, .bs-widget .wp-block-search__label {
+    padding-left: 10px;
+}
+.bs-widget-title .title:before, .widget_block h2:before, .wp-block-search__label:before {
+    width: 3px;
+    height: 16px;
+    top: 0;
+    left: 0;
+}
+.bs-widget-title .title:after, .widget_block h2:after, .wp-block-search__label:after {
+    width: 16px;
+    top: 0;
+    left: 0;
+    height: 3px;
+    position: absolute;
+    content: '';
+}
+.bs-blog-post .bs-blog-meta{
+    margin-bottom: 0;
+}
+.bs-blog-post .small-bottom {
+    margin-top: 10px;
+    border-top: 1px dashed;
+    padding-top: 10px;
+}
+.bs-social.info-left{
+    justify-content: end;
+}
+.bs-social li a i{
+    width: 30px;
+}
+/* MainFeatured */
+.mainfeatured {
+    margin-top: 30px;
+    margin-bottom: 50px;
+}
+.mainfeatured .bs-slide .inner .title {
+    font-size: 40px;
+}
+.bs-slide .inner {
+    width: 100%;
+    height: auto;
+}
+@media screen and (max-width: 991px){
+    .bs-headthree .navbar-brand .custom-logo {
+        width: 200px;
+        height: auto;
+    }
+}
+@media screen and (max-width: 767px){
+    .bs-latest-heading span{
+        display:none;
+    }
+    .bs-headthree .navbar-brand .custom-logo {
+        width: 120px;
+        height: auto;
+    }
+    .site-branding-text .site-title a, .site-branding-text .site-title{
+        font-size: 26px;
+    }
+}
+
+.switch{
+    display: none;
+}
