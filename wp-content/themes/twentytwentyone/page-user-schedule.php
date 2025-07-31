@@ -346,7 +346,7 @@ body {
                 <?php
                 $users = get_users();
                 foreach ($users as $user) {
-                    echo '<option value="' . esc_attr($user->ID) . '">' . esc_html($user->display_name) . '</option>';
+                    echo '<option value="' . esc_attr($user->ID) . '">' . esc_html($user->user_login) . '</option>';
                 }
                 ?>
             </select>

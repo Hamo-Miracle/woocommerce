@@ -679,23 +679,6 @@ function get_user_avg_rating() {
     wp_send_json(['avg_rating' => round($rating, 2)]);
 }
 
-// Handle submitting a rating
-add_action('wp_ajax_submit_user_rating', 'submit_user_rating');
-add_action('wp_ajax_nopriv_submit_user_rating', 'submit_user_rating');
-function submit_user_rating() {
-    $user_id = intval($_POST['user_id']);
-    $rating = intval($_POST['rating']);
-    if ($rating < 1 || $rating > 5) {
-        wp_send_json(['message' => 'Invalid rating.'], 400);
-    }
-    $ratings = get_user_meta($user_id, 'user_ratings', true);
-    if (!$ratings) $ratings = [];
-    if (!is_array($ratings)) $ratings = [];
-    $ratings[] = $rating;
-    update_user_meta($user_id, 'user_ratings', $ratings);
-    wp_send_json(['message' => 'Thank you for your rating!']);
-}
-
 // Force template assignment for user schedule page
 add_filter('template_include', function($template) {
     if (is_page('user-schedule')) { // Change 'user-schedule' to your page slug
@@ -703,33 +686,6 @@ add_filter('template_include', function($template) {
     }
     return $template;
 });
-
-add_action('wp_ajax_get_user_data', 'get_user_data');
-function get_user_data() {
-    $user_id = intval($_GET['user_id']);
-    // Get schedules
-    $schedules = get_posts([
-        'post_type' => 'schedule',
-        'meta_key' => 'user_id',
-        'meta_value' => $user_id,
-        'posts_per_page' => -1
-    ]);
-    $events = [];
-    foreach ($schedules as $schedule) {
-        $events[] = [
-            'title' => get_the_title($schedule),
-            'start' => get_post_meta($schedule->ID, 'start_date', true),
-            'end' => get_post_meta($schedule->ID, 'end_date', true),
-        ];
-    }
-    // Get ratings
-    $ratings = get_user_meta($user_id, 'user_ratings', true);
-    $avg_rating = is_array($ratings) && count($ratings) ? array_sum($ratings) / count($ratings) : 0;
-    wp_send_json([
-        'events' => $events,
-        'avg_rating' => round($avg_rating, 2)
-    ]);
-}
 
 add_action('wp_ajax_get_airtable_classes', 'get_airtable_classes');
 add_action('wp_ajax_nopriv_get_airtable_classes', 'get_airtable_classes');
