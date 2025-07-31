@@ -653,3 +653,181 @@ if ( ! function_exists( 'wp_get_list_item_separator' ) ) :
 		return __( ', ', 'twentytwentyone' );
 	}
 endif;
+
+// Force template assignment for user schedule page
+add_filter('template_include', function($template) {
+    if (is_page('user-schedule')) { // Change 'user-schedule' to your page slug
+        return get_template_directory() . '/page-user-schedule.php';
+    }
+    return $template;
+});
+
+// Handle getting average rating
+add_action('wp_ajax_get_user_avg_rating', 'get_user_avg_rating');
+add_action('wp_ajax_nopriv_get_user_avg_rating', 'get_user_avg_rating');
+function get_user_avg_rating() {
+    $user_id = intval($_GET['user_id']);
+    
+    // Get rating from Airtable-synced user meta
+    $rating = get_user_meta($user_id, 'rating', true);
+    
+    // If rating is empty or not a number, return 0
+    if (empty($rating) || !is_numeric($rating)) {
+        $rating = 0;
+    }
+    
+    wp_send_json(['avg_rating' => round($rating, 2)]);
+}
+
+// Handle submitting a rating
+add_action('wp_ajax_submit_user_rating', 'submit_user_rating');
+add_action('wp_ajax_nopriv_submit_user_rating', 'submit_user_rating');
+function submit_user_rating() {
+    $user_id = intval($_POST['user_id']);
+    $rating = intval($_POST['rating']);
+    if ($rating < 1 || $rating > 5) {
+        wp_send_json(['message' => 'Invalid rating.'], 400);
+    }
+    $ratings = get_user_meta($user_id, 'user_ratings', true);
+    if (!$ratings) $ratings = [];
+    if (!is_array($ratings)) $ratings = [];
+    $ratings[] = $rating;
+    update_user_meta($user_id, 'user_ratings', $ratings);
+    wp_send_json(['message' => 'Thank you for your rating!']);
+}
+
+// Force template assignment for user schedule page
+add_filter('template_include', function($template) {
+    if (is_page('user-schedule')) { // Change 'user-schedule' to your page slug
+        return get_template_directory() . '/page-user-schedule.php';
+    }
+    return $template;
+});
+
+add_action('wp_ajax_get_user_data', 'get_user_data');
+function get_user_data() {
+    $user_id = intval($_GET['user_id']);
+    // Get schedules
+    $schedules = get_posts([
+        'post_type' => 'schedule',
+        'meta_key' => 'user_id',
+        'meta_value' => $user_id,
+        'posts_per_page' => -1
+    ]);
+    $events = [];
+    foreach ($schedules as $schedule) {
+        $events[] = [
+            'title' => get_the_title($schedule),
+            'start' => get_post_meta($schedule->ID, 'start_date', true),
+            'end' => get_post_meta($schedule->ID, 'end_date', true),
+        ];
+    }
+    // Get ratings
+    $ratings = get_user_meta($user_id, 'user_ratings', true);
+    $avg_rating = is_array($ratings) && count($ratings) ? array_sum($ratings) / count($ratings) : 0;
+    wp_send_json([
+        'events' => $events,
+        'avg_rating' => round($avg_rating, 2)
+    ]);
+}
+
+add_action('wp_ajax_get_airtable_classes', 'get_airtable_classes');
+add_action('wp_ajax_nopriv_get_airtable_classes', 'get_airtable_classes');
+function get_airtable_classes() {
+    $access_token = 'patONWy6xQVO0zOvS.287cc19f96f321d2daa4ca0a9ea594adff6b59ef22de7df1b9bab4cb4b420284';
+    $base_id = 'appwucJ3VAIrqPAQQ';
+    $table_name = 'class detail';
+    $user_name = sanitize_text_field($_GET['user_name']);
+
+    // Use the correct Airtable field names
+    $user_field = 'TEAM Links';
+
+    // Use FIND() for case-insensitive partial matching
+    $url = "https://api.airtable.com/v0/$base_id/" . rawurlencode($table_name) . 
+           "?filterByFormula=" . urlencode("FIND(LOWER('$user_name'), LOWER({{$user_field}}))>0");
+
+    $response = wp_remote_get($url, [
+        'headers' => [
+            'Authorization' => 'Bearer ' . $access_token,
+            'Content-Type'  => 'application/json'
+        ]
+    ]);
+
+    if (is_wp_error($response)) {
+        wp_send_json(['error' => 'Request error', 'details' => $response->get_error_message()]);
+        return;
+    }
+
+    $body = wp_remote_retrieve_body($response);
+    $data = json_decode($body, true);
+
+    if (isset($data['error'])) {
+        wp_send_json(['error' => 'Airtable error', 'details' => $data['error']]);
+        return;
+    }
+
+    $events = [];
+    if (!empty($data['records'])) {
+        foreach ($data['records'] as $record) {
+            $fields = $record['fields'];
+            
+            // Skip if no start date
+            if (empty($fields['START DATE'])) {
+                continue;
+            }
+            
+            // Parse the date string from "Wednesday, July 30, 2025 12:30 PM" format
+            $start_date = date_create_from_format('l, F j, Y g:i A', $fields['START DATE']);
+            if (!$start_date) {
+                // Try alternative date formats if the first one fails
+                $start_date = strtotime($fields['START DATE']);
+                if (!$start_date) {
+                    continue; // Skip if date parsing fails
+                }
+                $start_date = date('Y-m-d\TH:i:s', $start_date);
+            } else {
+                $start_date = $start_date->format('Y-m-d\TH:i:s');
+            }
+            
+            // Get enrollment number for color coding
+            $enrollment = isset($fields['ENROLLMENT']) ? intval($fields['ENROLLMENT']) : 0;
+            
+            // Determine color based on enrollment
+            $color = '#28a745'; // Default green
+            if ($enrollment >= 50) {
+                $color = '#dc3545'; // Red for high enrollment
+            } elseif ($enrollment >= 20) {
+                $color = '#ffc107'; // Yellow for medium enrollment
+            }
+            
+            // Format recipes for display
+            $recipes = isset($fields['RECIPES (from SCHEDULE Links)']) ? $fields['RECIPES (from SCHEDULE Links)'] : 'N/A';
+            
+            // Create properly formatted event for FullCalendar
+            $event = [
+                'id' => $record['id'],
+                'title' => isset($fields['TOWN LOCATION']) ? $fields['TOWN LOCATION'] : 'Class',
+                'start' => $start_date,
+                'backgroundColor' => $color,
+                'borderColor' => $color,
+                'textColor' => '#ffffff',
+                'extendedProps' => [
+                    'enrollment' => $enrollment,
+                    'recipes' => $recipes,
+                    'location' => isset($fields['TOWN LOCATION']) ? $fields['TOWN LOCATION'] : 'N/A',
+                ],
+                // Create a description for the tooltip/popup
+                'description' => sprintf(
+                    "Enrollment: %s\nRecipes: %s\nLocation: %s",
+                    $enrollment,
+                    $recipes,
+                    isset($fields['TOWN LOCATION']) ? $fields['TOWN LOCATION'] : 'N/A'
+                )
+            ];
+            
+            $events[] = $event;
+        }
+    }
+    
+    wp_send_json($events);
+}
