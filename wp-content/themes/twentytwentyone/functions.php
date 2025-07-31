@@ -730,3 +730,48 @@ function get_user_data() {
         'avg_rating' => round($avg_rating, 2)
     ]);
 }
+
+add_action('wp_ajax_get_airtable_classes', 'get_airtable_classes');
+function get_airtable_classes() {
+    $access_token = 'patONWy6xQVO0zOvS.287cc19f96f321d2daa4ca0a9ea594adff6b59ef22de7df1b9bab4cb4b420284';
+    $base_id = 'appwucJ3VAIrqPAQQ';
+    $table_name = 'class detail';
+    $user_name = sanitize_text_field($_GET['user_name']);
+
+    // Use the correct Airtable field names
+    $user_field = 'TEAM Links';
+
+    $url = "https://api.airtable.com/v0/$base_id/" . rawurlencode($table_name) . "?filterByFormula=" . urlencode("REGEX_MATCH({{$user_field}}, '$user_name')");
+
+    $response = wp_remote_get($url, [
+        'headers' => [
+            'Authorization' => 'Bearer ' . $access_token,
+            'Content-Type'  => 'application/json'
+        ]
+    ]);
+
+    if (is_wp_error($response)) {
+        wp_send_json(['error' => 'Request error', 'details' => $response->get_error_message()]);
+    }
+
+    $body = wp_remote_retrieve_body($response);
+    $data = json_decode($body, true);
+
+    if (isset($data['error'])) {
+        wp_send_json(['error' => 'Airtable error', 'details' => $data['error']]);
+    }
+
+    $events = [];
+    if (!empty($data['records'])) {
+        foreach ($data['records'] as $record) {
+            $fields = $record['fields'];
+            $events[] = [
+                'start' => $fields['START DATE'] ?? '',
+				'TOWN LOCATION' => $fields['TOWN LOCATION'] ?? '',
+				'ENROLLMENT' => $fields['ENROLLMENT'] ?? '',
+				'RECIPES' => $fields['RECIPES (from SCHEDULE Links)'] ?? '',
+            ];
+        }
+    }
+    wp_send_json($events);
+}

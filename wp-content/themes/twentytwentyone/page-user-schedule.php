@@ -386,6 +386,17 @@ body {
 </div>
 
 <script>
+
+let calendar; // Make calendar variable accessible
+
+function loadAirtableEvents(userName) {
+    fetch('<?php echo admin_url('admin-ajax.php'); ?>?action=get_airtable_classes&user_name=' + encodeURIComponent(userName))
+        .then(response => response.json())
+        .then(events => {
+            calendar.removeAllEvents();
+            calendar.addEventSource(events);
+        });
+}
 document.addEventListener('DOMContentLoaded', function() {
     const userDropdown = document.getElementById('user-dropdown');
     const avgRatingValue = document.getElementById('avg-rating-value');
@@ -412,50 +423,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize FullCalendar
     var calendarEl = document.getElementById('calendar');
-    var calendar = new FullCalendar.Calendar(calendarEl, {
+    calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        initialDate: '2025-07-01',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        eventClick: function(info) {
+            // Show details (customize as needed)
+            alert('Class: ' + info.event.title + '\\n' + info.event.extendedProps.description);
         },
-        events: [
-            {
-                title: '8:00 July 14, 2025 8:00am - "Carlisle Re..."',
-                start: '2025-07-14',
-                backgroundColor: '#007bff',
-                borderColor: '#007bff'
-            },
-            {
-                title: '8:00 July 15, 2025 8:00am - "Carlisle Re..."',
-                start: '2025-07-15',
-                backgroundColor: '#007bff',
-                borderColor: '#007bff'
-            },
-            {
-                title: '8:00 July 16, 2025 8:00am - "Carlisle Re..."',
-                start: '2025-07-16',
-                backgroundColor: '#007bff',
-                borderColor: '#007bff'
-            },
-            {
-                title: '8:00 July 17, 2025 8:00am - "Carlisle Re..."',
-                start: '2025-07-17',
-                backgroundColor: '#007bff',
-                borderColor: '#007bff'
-            },
-            {
-                title: '8:00 July 18, 2025 8:00am - "Carlisle Re..."',
-                start: '2025-07-18',
-                backgroundColor: '#007bff',
-                borderColor: '#007bff'
-            }
-        ],
-        dayMaxEvents: true,
-        height: 'auto'
+        // ... other options ...
     });
     calendar.render();
+
+    // Initial load
+    const dropdown = document.getElementById('user-dropdown');
+    loadAirtableEvents(dropdown.options[dropdown.selectedIndex].text);
+
+    // On user change
+    document.getElementById('user-dropdown').addEventListener('change', function() {
+        const selectedText = this.options[this.selectedIndex].text;
+        loadAirtableEvents(selectedText);
+    });
 });
 </script>
 
