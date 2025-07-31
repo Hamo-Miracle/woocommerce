@@ -359,7 +359,21 @@ body {
             </a>
             <div class="rating-section">
                 <div class="rating-label">AVERAGE RATING</div>
-                <div class="rating-value" id="avg-rating-value">4.00</div>
+                <div class="rating-value" id="avg-rating-value">
+                    <?php
+                    // Get the first user's rating as default
+                    $users = get_users(['number' => 1]);
+                    if (!empty($users)) {
+                        $first_user = $users[0];
+                        $rating = get_user_meta($first_user->ID, 'rating', true);
+                        echo !empty($rating) && is_numeric($rating) ? number_format($rating, 2) : '0.00';
+                    } else {
+                        echo '0.00';
+                    }
+                    ?>
+                </div>
+                
+
             </div>
         </div>
     </div>
@@ -384,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 avgRatingValue.textContent = data.avg_rating || '0.00';
             })
             .catch(() => {
-                avgRatingValue.textContent = '4.86'; // Fallback
+                avgRatingValue.textContent = '0.00'; // Fallback
             });
     }
 

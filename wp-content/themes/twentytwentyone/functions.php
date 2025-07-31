@@ -27,11 +27,16 @@ add_action('wp_ajax_get_user_avg_rating', 'get_user_avg_rating');
 add_action('wp_ajax_nopriv_get_user_avg_rating', 'get_user_avg_rating');
 function get_user_avg_rating() {
     $user_id = intval($_GET['user_id']);
-    $ratings = get_user_meta($user_id, 'user_ratings', true);
-    if (!$ratings) $ratings = [];
-    if (!is_array($ratings)) $ratings = [];
-    $avg = count($ratings) ? array_sum($ratings) / count($ratings) : 0;
-    wp_send_json(['avg_rating' => round($avg, 2)]);
+    
+    // Get rating from Airtable-synced user meta
+    $rating = get_user_meta($user_id, 'rating', true);
+    
+    // If rating is empty or not a number, return 0
+    if (empty($rating) || !is_numeric($rating)) {
+        $rating = 0;
+    }
+    
+    wp_send_json(['avg_rating' => round($rating, 2)]);
 }
 
 // Handle submitting a rating
@@ -698,3 +703,30 @@ add_filter('template_include', function($template) {
     }
     return $template;
 });
+
+add_action('wp_ajax_get_user_data', 'get_user_data');
+function get_user_data() {
+    $user_id = intval($_GET['user_id']);
+    // Get schedules
+    $schedules = get_posts([
+        'post_type' => 'schedule',
+        'meta_key' => 'user_id',
+        'meta_value' => $user_id,
+        'posts_per_page' => -1
+    ]);
+    $events = [];
+    foreach ($schedules as $schedule) {
+        $events[] = [
+            'title' => get_the_title($schedule),
+            'start' => get_post_meta($schedule->ID, 'start_date', true),
+            'end' => get_post_meta($schedule->ID, 'end_date', true),
+        ];
+    }
+    // Get ratings
+    $ratings = get_user_meta($user_id, 'user_ratings', true);
+    $avg_rating = is_array($ratings) && count($ratings) ? array_sum($ratings) / count($ratings) : 0;
+    wp_send_json([
+        'events' => $events,
+        'avg_rating' => round($avg_rating, 2)
+    ]);
+}
