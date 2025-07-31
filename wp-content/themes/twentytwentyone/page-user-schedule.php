@@ -329,7 +329,6 @@ body {
 
 /* Add "67 schedules" text at bottom */
 .calendar-grid::after {
-  content: "67 schedules";
   display: block;
   margin-top: 15px;
   font-size: 14px;
@@ -386,17 +385,8 @@ body {
 </div>
 
 <script>
+let calendar; // Make calendar variable accessible globally
 
-let calendar; // Make calendar variable accessible
-
-function loadAirtableEvents(userName) {
-    fetch('<?php echo admin_url('admin-ajax.php'); ?>?action=get_airtable_classes&user_name=' + encodeURIComponent(userName))
-        .then(response => response.json())
-        .then(events => {
-            calendar.removeAllEvents();
-            calendar.addEventSource(events);
-        });
-}
 document.addEventListener('DOMContentLoaded', function() {
     const userDropdown = document.getElementById('user-dropdown');
     const avgRatingValue = document.getElementById('avg-rating-value');
@@ -416,32 +406,118 @@ document.addEventListener('DOMContentLoaded', function() {
     // On user change
     userDropdown.addEventListener('change', function() {
         fetchAverageRating(this.value);
+        const selectedText = this.options[this.selectedIndex].text;
+        loadAirtableEvents(selectedText);
     });
 
-    // Initial load
+    // Initial load of rating
     fetchAverageRating(userDropdown.value);
 
     // Initialize FullCalendar
     var calendarEl = document.getElementById('calendar');
     calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        eventClick: function(info) {
-            // Show details (customize as needed)
-            alert('Class: ' + info.event.title + '\\n' + info.event.extendedProps.description);
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
-        // ... other options ...
+        eventClick: function(info) {
+            // Show details in a more user-friendly way
+            const event = info.event;
+            const props = event.extendedProps;
+            
+            // Create a custom popup or use alert
+            alert(
+                `Class at ${event.title}\n` +
+                `Time: ${new Date(event.start).toLocaleString()}\n` +
+                `Enrollment: ${props.enrollment}\n` +
+                `Recipes: ${props.recipes}\n` +
+                `Location: ${props.location}`
+            );
+        },
+        eventDidMount: function(info) {
+            // Add tooltips to events
+            if (info.event.extendedProps.description) {
+                const tooltip = info.event.extendedProps.description.replace(/\n/g, '<br>');
+                info.el.setAttribute('title', tooltip);
+            }
+        },
+        eventTimeFormat: {
+            hour: 'numeric',
+            minute: '2-digit',
+            meridiem: 'short'
+        }
     });
     calendar.render();
 
-    // Initial load
-    const dropdown = document.getElementById('user-dropdown');
-    loadAirtableEvents(dropdown.options[dropdown.selectedIndex].text);
+    // Function to load events from Airtable
+    function loadAirtableEvents(userName) {
+        // Show loading indicator (use a separate element for loading)
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.id = 'calendar-loading';
+        loadingIndicator.style.cssText = 'text-align:center; padding:50px; position:absolute; background:rgba(255,255,255,0.8); width:100%; height:100%; z-index:10;';
+        loadingIndicator.innerHTML = 'Loading calendar data...';
+        
+        // Add the loading indicator to the calendar container
+        const calendarContainer = document.querySelector('.calendar-grid');
+        calendarContainer.style.position = 'relative';
+        calendarContainer.appendChild(loadingIndicator);
+        
+        fetch('<?php echo admin_url('admin-ajax.php'); ?>?action=get_airtable_classes&user_name=' + encodeURIComponent(userName))
+            .then(response => response.json())
+            .then(events => {
+                // Remove the loading indicator
+                const loadingElement = document.getElementById('calendar-loading');
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+                
+                // Check if we got an error
+                if (events.error) {
+                    console.error('Error loading events:', events.error, events.details);
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.cssText = 'text-align:center; padding:50px; color:red;';
+                    errorDiv.innerHTML = 'Error loading calendar data. Please try again.';
+                    calendarContainer.appendChild(errorDiv);
+                    return;
+                }
+                
+                // Clear and re-render calendar
+                calendar.removeAllEvents();
+                calendar.addEventSource(events);
+                
+                // Update the count text
+                const countElement = document.querySelector('.calendar-count');
+                if (countElement) {
+                    countElement.textContent = events.length + ' schedules';
+                } else {
+                    // If the count element doesn't exist, add it
+                    const countDiv = document.createElement('div');
+                    countDiv.className = 'calendar-count';
+                    countDiv.style.cssText = 'margin-top:15px; font-size:14px; color:#666; font-weight:500;';
+                    countDiv.textContent = events.length + ' schedules';
+                    calendarContainer.appendChild(countDiv);
+                }
+            })
+            .catch(error => {
+                // Remove the loading indicator
+                const loadingElement = document.getElementById('calendar-loading');
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+                
+                console.error('Error fetching events:', error);
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = 'text-align:center; padding:50px; color:red;';
+                errorDiv.innerHTML = 'Error loading calendar data. Please try again.';
+                calendarContainer.appendChild(errorDiv);
+            });
+    }
 
-    // On user change
-    document.getElementById('user-dropdown').addEventListener('change', function() {
-        const selectedText = this.options[this.selectedIndex].text;
-        loadAirtableEvents(selectedText);
-    });
+    // Initial load of events
+    const selectedText = userDropdown.options[userDropdown.selectedIndex].text;
+    loadAirtableEvents(selectedText);
 });
 </script>
 

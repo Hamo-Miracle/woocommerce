@@ -732,6 +732,7 @@ function get_user_data() {
 }
 
 add_action('wp_ajax_get_airtable_classes', 'get_airtable_classes');
+add_action('wp_ajax_nopriv_get_airtable_classes', 'get_airtable_classes');
 function get_airtable_classes() {
     $access_token = 'patONWy6xQVO0zOvS.287cc19f96f321d2daa4ca0a9ea594adff6b59ef22de7df1b9bab4cb4b420284';
     $base_id = 'appwucJ3VAIrqPAQQ';
@@ -741,7 +742,9 @@ function get_airtable_classes() {
     // Use the correct Airtable field names
     $user_field = 'TEAM Links';
 
-    $url = "https://api.airtable.com/v0/$base_id/" . rawurlencode($table_name) . "?filterByFormula=" . urlencode("REGEX_MATCH({{$user_field}}, '$user_name')");
+    // Use FIND() for case-insensitive partial matching
+    $url = "https://api.airtable.com/v0/$base_id/" . rawurlencode($table_name) . 
+           "?filterByFormula=" . urlencode("FIND(LOWER('$user_name'), LOWER({{$user_field}}))>0");
 
     $response = wp_remote_get($url, [
         'headers' => [
@@ -752,6 +755,7 @@ function get_airtable_classes() {
 
     if (is_wp_error($response)) {
         wp_send_json(['error' => 'Request error', 'details' => $response->get_error_message()]);
+        return;
     }
 
     $body = wp_remote_retrieve_body($response);
@@ -759,19 +763,71 @@ function get_airtable_classes() {
 
     if (isset($data['error'])) {
         wp_send_json(['error' => 'Airtable error', 'details' => $data['error']]);
+        return;
     }
 
     $events = [];
     if (!empty($data['records'])) {
         foreach ($data['records'] as $record) {
             $fields = $record['fields'];
-            $events[] = [
-                'start' => $fields['START DATE'] ?? '',
-				'TOWN LOCATION' => $fields['TOWN LOCATION'] ?? '',
-				'ENROLLMENT' => $fields['ENROLLMENT'] ?? '',
-				'RECIPES' => $fields['RECIPES (from SCHEDULE Links)'] ?? '',
+            
+            // Skip if no start date
+            if (empty($fields['START DATE'])) {
+                continue;
+            }
+            
+            // Parse the date string from "Wednesday, July 30, 2025 12:30 PM" format
+            $start_date = date_create_from_format('l, F j, Y g:i A', $fields['START DATE']);
+            if (!$start_date) {
+                // Try alternative date formats if the first one fails
+                $start_date = strtotime($fields['START DATE']);
+                if (!$start_date) {
+                    continue; // Skip if date parsing fails
+                }
+                $start_date = date('Y-m-d\TH:i:s', $start_date);
+            } else {
+                $start_date = $start_date->format('Y-m-d\TH:i:s');
+            }
+            
+            // Get enrollment number for color coding
+            $enrollment = isset($fields['ENROLLMENT']) ? intval($fields['ENROLLMENT']) : 0;
+            
+            // Determine color based on enrollment
+            $color = '#28a745'; // Default green
+            if ($enrollment >= 50) {
+                $color = '#dc3545'; // Red for high enrollment
+            } elseif ($enrollment >= 20) {
+                $color = '#ffc107'; // Yellow for medium enrollment
+            }
+            
+            // Format recipes for display
+            $recipes = isset($fields['RECIPES (from SCHEDULE Links)']) ? $fields['RECIPES (from SCHEDULE Links)'] : 'N/A';
+            
+            // Create properly formatted event for FullCalendar
+            $event = [
+                'id' => $record['id'],
+                'title' => isset($fields['TOWN LOCATION']) ? $fields['TOWN LOCATION'] : 'Class',
+                'start' => $start_date,
+                'backgroundColor' => $color,
+                'borderColor' => $color,
+                'textColor' => '#ffffff',
+                'extendedProps' => [
+                    'enrollment' => $enrollment,
+                    'recipes' => $recipes,
+                    'location' => isset($fields['TOWN LOCATION']) ? $fields['TOWN LOCATION'] : 'N/A',
+                ],
+                // Create a description for the tooltip/popup
+                'description' => sprintf(
+                    "Enrollment: %s\nRecipes: %s\nLocation: %s",
+                    $enrollment,
+                    $recipes,
+                    isset($fields['TOWN LOCATION']) ? $fields['TOWN LOCATION'] : 'N/A'
+                )
             ];
+            
+            $events[] = $event;
         }
     }
+    
     wp_send_json($events);
 }
