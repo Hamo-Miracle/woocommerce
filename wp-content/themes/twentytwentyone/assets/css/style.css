@@ -1,0 +1,26 @@
+/* Loading indicator for search */
+.woocommerce-product-search {
+    position: relative;
+}
+
+.woocommerce-product-search::after {
+    content: "";
+    display: none;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    margin-top: -10px;
+    background-size: 20px 20px;
+}
+
+.woocommerce-product-search.loading::after {
+    display: block;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

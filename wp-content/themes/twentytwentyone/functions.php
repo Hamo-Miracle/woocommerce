@@ -787,3 +787,251 @@ function get_airtable_classes() {
     
     wp_send_json($events);
 }
+
+// search-engine using restapi
+function custom_product_search_scripts() {
+    wp_enqueue_script('jquery-ui-core');
+    wp_enqueue_script('jquery-ui-autocomplete');
+    
+    // Enqueue jQuery UI CSS
+    wp_enqueue_style(
+        'jquery-ui-css',
+        'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css',
+        array(),
+        '1.13.2'
+    );
+    
+    // Enqueue our custom script
+    wp_enqueue_script(
+        'custom-product-search',
+        get_template_directory_uri() . '/js/custom-product-search.js',
+        array('jquery', 'jquery-ui-autocomplete'),
+        '1.0.0',
+        true
+    );
+    
+    // Pass the necessary data to our script
+	wp_localize_script(
+		'custom-product-search',
+		'wc_search_params',
+		array(
+			'rest_url' => rest_url('myapp/v1/product-search'),
+			'nonce' => wp_create_nonce('wp_rest'),
+			'admin_url' => admin_url('/'), // For loading spinner
+		)
+	);
+    
+    // Add custom CSS for autocomplete
+    wp_add_inline_style('jquery-ui-css', '
+        /* Product Search Autocomplete Styles */
+        .ui-autocomplete {
+            position: absolute;
+            z-index: 999999;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+        
+        .ui-autocomplete .ui-menu-item {
+            padding: 0;
+            margin: 0;
+        }
+        
+        .autocomplete-item {
+            display: flex;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .autocomplete-item:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .autocomplete-image {
+            flex: 0 0 50px;
+            margin-right: 10px;
+        }
+        
+        .autocomplete-image img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 3px;
+        }
+        
+        .autocomplete-details {
+            flex: 1;
+        }
+        
+        .autocomplete-title {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .autocomplete-price {
+            color: #77a464;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        
+        .autocomplete-category {
+            font-size: 0.8em;
+            color: #777;
+        }
+        
+        .ui-autocomplete-view-all {
+            padding: 10px;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+        
+        .view-all-results a {
+            color: #0073aa;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    ');
+}
+add_action('wp_enqueue_scripts', 'custom_product_search_scripts');
+
+/**
+ * Register product search REST API endpoint
+ */
+function register_product_search_endpoint() {
+    register_rest_route('myapp/v1', '/product-search', array(
+        'methods' => 'GET',
+        'callback' => 'handle_product_search',
+        'permission_callback' => '__return_true'
+    ));
+}
+add_action('rest_api_init', 'register_product_search_endpoint');
+
+function handle_product_search($request) {
+
+	// Check if WooCommerce is active
+    if (!function_exists('wc_get_product')) {
+        return new WP_Error('woocommerce_required', 'WooCommerce is required for this feature', array('status' => 400));
+    }
+
+	$search_term = sanitize_text_field($request->get_param('search'));
+    
+    if (empty($search_term)) {
+        return new WP_Error('no_search_term', 'No search term provided', array('status' => 400));
+    }
+    
+    // Check for cached results (cache for 1 hour)
+    $cache_key = 'product_search_' . md5($search_term);
+    $cached_results = get_transient($cache_key);
+    
+    if ($cached_results !== false) {
+        return $cached_results;
+    }
+    
+    // Query WooCommerce products
+    $args = array(
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'posts_per_page' => 10,
+        's'              => $search_term,
+        'orderby'        => 'relevance',
+    );
+    
+    $query = new WP_Query($args);
+    $products = array();
+    
+    if ($query->have_posts()) {
+        while ($query->have_posts()) {
+            $query->the_post();
+            $product = wc_get_product(get_the_ID());
+            
+            // Skip if not a valid product
+            if (!$product) continue;
+            
+            // Get product image
+            $image = wp_get_attachment_image_src(get_post_thumbnail_id(), 'thumbnail');
+            $image_url = $image ? $image[0] : wc_placeholder_img_src('thumbnail');
+            
+            // Get product categories
+            $categories = get_the_terms(get_the_ID(), 'product_cat');
+            $category_names = array();
+            
+            if ($categories && !is_wp_error($categories)) {
+                foreach ($categories as $category) {
+                    $category_names[] = $category->name;
+                }
+            }
+            
+            // Add to products array
+            $products[] = array(
+                'id'        => $product->get_id(),
+                'title'     => $product->get_name(),
+                'url'       => get_permalink(),
+                'image'     => $image_url,
+                'price'     => $product->get_price_html(),
+                'sku'       => $product->get_sku(),
+                'categories' => implode(', ', $category_names),
+                'in_stock'  => $product->is_in_stock(),
+            );
+        }
+    }
+    
+    wp_reset_postdata();
+	set_transient($cache_key, $products, HOUR_IN_SECONDS);
+    return $products;
+}
+// Add for Japanese
+function improve_japanese_search($where, $query) {
+    if (!is_admin() && $query->is_search() && $query->is_main_query()) {
+        global $wpdb;
+        
+        $search_term = $query->get('s');
+        // Check if the search term contains Japanese characters
+        if (preg_match('/[\x{3000}-\x{303F}]|[\x{3040}-\x{309F}]|[\x{30A0}-\x{30FF}]|[\x{FF00}-\x{FFEF}]|[\x{4E00}-\x{9FAF}]|[\x{2605}-\x{2606}]|[\x{2190}-\x{2195}]|\p{Han}/u', $search_term)) {
+            $where = str_replace(
+                "AND (((({$wpdb->posts}.post_title LIKE",
+                "AND (((({$wpdb->posts}.post_title LIKE '%{$search_term}%') OR ({$wpdb->posts}.post_content LIKE '%{$search_term}%') OR ({$wpdb->posts}.post_excerpt LIKE '%{$search_term}%') OR (EXISTS (SELECT 1 FROM {$wpdb->postmeta} WHERE {$wpdb->postmeta}.post_id = {$wpdb->posts}.ID AND {$wpdb->postmeta}.meta_value LIKE '%{$search_term}%'))) OR (({$wpdb->posts}.post_title LIKE",
+                $where
+            );
+        }
+    }
+    return $where;
+}
+add_filter('posts_where', 'improve_japanese_search', 10, 2);
+
+// To track popular searches
+function track_product_search() {
+    if (is_search() && get_query_var('post_type') === 'product') {
+        $search_term = get_search_query();
+        if (!empty($search_term)) {
+            // Get existing searches
+            $searches = get_option('product_search_analytics', array());
+            
+            // Add current search
+            if (isset($searches[$search_term])) {
+                $searches[$search_term]++;
+            } else {
+                $searches[$search_term] = 1;
+            }
+            
+            // Sort by popularity
+            arsort($searches);
+            
+            // Keep only top 100 searches
+            if (count($searches) > 100) {
+                $searches = array_slice($searches, 0, 100, true);
+            }
+            
+            // Save updated searches
+            update_option('product_search_analytics', $searches);
+        }
+    }
+}
+add_action('template_redirect', 'track_product_search');
