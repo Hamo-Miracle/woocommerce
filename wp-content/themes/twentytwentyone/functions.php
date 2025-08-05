@@ -787,7 +787,7 @@ function get_airtable_classes() {
     
     wp_send_json($events);
 }
-
+// search-engine start
 // search-engine using restapi
 function custom_product_search_scripts() {
     wp_enqueue_script('jquery-ui-core');
@@ -1035,3 +1035,82 @@ function track_product_search() {
     }
 }
 add_action('template_redirect', 'track_product_search');
+//search-engine end
+
+//user-shcedule
+
+function airtable_user_schedule_shortcode() {
+    // Get current WordPress user
+    $current_user = wp_get_current_user();
+    
+    // If user is not logged in, show a message or return empty
+    if (!$current_user->exists()) {
+        return '<p>Please log in to view your schedule.</p>';
+    }
+    
+    // Get user's display name for filtering
+    $user_name = esc_attr($current_user->display_name);
+	// $rec_id = get_user_meta($current_user->ID, 'rec_id', true);
+
+	// $record_id = $rec_id;
+	// $filter_structure = [0, ["uyBon", 6, [$rec_id]]];
+	// $json_encoded = json_encode($filter_structure);
+	// $base64_encoded = base64_encode($json_encoded);
+	// $filter_param = "ywyKN=b%3A:" . urlencode($base64_encoded);
+	$filter_param = get_user_filter_url($user_name);
+
+	$embed_url = 'https://airtable.com/embed/appwucJ3VAIrqPAQQ/shrcLkdMj5dKnTo9N' . $filter_param;
+    $custom_css = '
+		<style>
+			.items-center {
+			display:none !important;
+			}
+		</style>';
+    // Create the filtered embed code
+    $embed_code = $custom_css .'<iframe class="airtable-embed"
+      src="' . esc_url($embed_url) . '" 
+      frameborder="0" onmousewheel="" width="100%" height="733" 
+      style="background: transparent; border: 1px solid #ccc;">
+    </iframe>';
+    
+    return $embed_code;
+}
+add_shortcode('schedule', 'airtable_user_schedule_shortcode');
+
+function get_user_filter_url($user_name) {
+	$user_filter_urls = [
+        'Alexa Downs' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlYzU5bmU2cmJTZk5WSEZZIl1dXQ',
+		'Alisa Owen' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY1lYR3pISU85TnZBWU10Il1dXQ',
+		'Amy Alicyn Merritt' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY0xZZjR3M1ZXUlpPOTF0Il1dXQ',
+		'Anisha Espinosa' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY1pxbTVEeVdZSVZrTUI1Il1dXQ',
+		'Branda Noun' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY1hnWVRpQUJJV0JSU09LIl1dXQ',
+		'Catherine Thomas' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlYzBQOHJweTI0SFBxY3ZXIl1dXQ',
+		'Cindy Elmore' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY0hKQXBtS29rV3ZYZHhZIl1dXQ',
+		'Colleen Quinn' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlYzZvY0JMUGZoZjNZYlJKIl1dXQ',
+		'Di Summer' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY0VJOWRGSWxQa3Q3U1luIl1dXQ',
+		'Dina DeAmicis' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlYzNGWVNrQzl6eEhYRWkyIl1dXQ',
+		'Doreen Bettano Iovanna' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY0hmbFFIcmxDVTBTamZDIl1dXQ',
+		'Elena Higgins' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY0dFbzM2QlFmWG9zNjA4Il1dXQ',
+		'Elizabeth Hummel' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlYzdBQ1Y1d1RsREFBYVNaIl1dXQ',
+		'Gabriella Lazzarino' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlYzZqTDc3d3dkZEhaY1BUIl1dXQ',
+		'Holly Flanagan' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY1J6Q3NFem5TemIwaXF6Il1dXQ',
+		'Jeanette Schaible' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY0dQT05KVkFaZm5GTThRIl1dXQ',
+		'Joana Marques' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY2lIcGNOb2JadUFJSEFRIl1dXQ',
+		'Karen Modell Conrad' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY2U0RHdnVWYwNHZaR1NIIl1dXQ',
+		'Kristen Funk' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY2loYTVVckxUakxwYjhKIl1dXQ',
+		'LeeAnn Gardner' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY1lVajNFc1VuejRxQU1JIl1dXQ',
+		'Mary Palen' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY1FIWE5JMFh5ZVBDcnA5Il1dXQ',
+		'Preethi Shivaraman' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlYzg0UXhaR3huUXZCNGlHIl1dXQ',
+		'Qianzhi Jiang' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY3hldUdIMFN4RmZwYVpCIl1dXQ',
+		'Sheila Jewer' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY20zTmYyV1pGeXBnTGM5Il1dXQ',
+		'Sheila M Harney' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY1RuTXRtSTM1T3JQanhlIl1dXQ',
+		'Sivan Avramovich' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY2RWaTdXNVNpM2VCNFdwIl1dXQ',
+		'Sonya Good' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlYzRjZjR6dWFjOU9vTzNMIl1dXQ',
+        // Add more users and their specific filter URLs here
+    ];
+
+	$filter_url = isset($user_filter_urls[$user_name]) 
+        ? $user_filter_urls[$user_name] 
+        : '';
+	return $filter_url;
+}
