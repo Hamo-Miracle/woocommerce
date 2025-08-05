@@ -1060,14 +1060,8 @@ function airtable_user_schedule_shortcode() {
 	$filter_param = get_user_filter_url($user_name);
 
 	$embed_url = 'https://airtable.com/embed/appwucJ3VAIrqPAQQ/shrcLkdMj5dKnTo9N' . $filter_param;
-    $custom_css = '
-		<style>
-			.items-center {
-			display:none !important;
-			}
-		</style>';
     // Create the filtered embed code
-    $embed_code = $custom_css .'<iframe class="airtable-embed"
+    $embed_code = '<iframe class="airtable-embed"
       src="' . esc_url($embed_url) . '" 
       frameborder="0" onmousewheel="" width="100%" height="733" 
       style="background: transparent; border: 1px solid #ccc;">
