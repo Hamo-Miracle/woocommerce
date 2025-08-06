@@ -1074,6 +1074,7 @@ add_shortcode('schedule', 'airtable_user_schedule_shortcode');
 function get_user_filter_url($user_name) {
 	$user_filter_urls = [
         'Alexa Downs' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlYzU5bmU2cmJTZk5WSEZZIl1dXQ',
+		'Ali Geronimo' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY0dMRVNRbFJTNld4WXdJIl1dXQ',
 		'Alisa Owen' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY1lYR3pISU85TnZBWU10Il1dXQ',
 		'Amy Alicyn Merritt' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY0xZZjR3M1ZXUlpPOTF0Il1dXQ',
 		'Anisha Espinosa' => '?ywyKN=b%3AWzAsWyJ1eUJvbiIsNixbInJlY1pxbTVEeVdZSVZrTUI1Il1dXQ',
